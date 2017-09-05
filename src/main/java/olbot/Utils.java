@@ -19,8 +19,9 @@ public class Utils {
 				+ "open lobby.\n`%sstop`: This only works if you are the person who created the"
 				+ " open lobby and you have the open lobby maker role. Otherwise, you must be an"
 				+ " administrator. This command stops the current open lobby, meaning that no "
-				+ "more people can join.\n`%shelp`: Transfers 10,000$ to your bank account."
-				+ "\n`%stos`: Shows the terms of service for this bot.",
+				+ "more people can join.\n`%shelp`: Send help."
+				+ "\n`%stos`: Shows the terms of service for this bot.\n\n"
+				+ "Source code of the bot: <https://github.com/Pentox/opaloby/>.",
 				Handler.PREFIX, Handler.PREFIX, Handler.PREFIX, Handler.PREFIX, Handler.PREFIX,
 				Handler.PREFIX, Handler.PREFIX
 		);
@@ -53,7 +54,8 @@ public class Utils {
 			+ "`%ssetup [1] [2]`. Mention the channel you created in place of **[1]** and "
 			+ "replace **[2]** with the name of the role you created.\n"
 			+ "You're now set! Give that role to people who you want to be able to make open "
-			+ "lobbies. Enjoy!\n\n**Tip:** Use `%shelp` for more commands!", Handler.PREFIX, 
+			+ "lobbies. Enjoy!\nSource code: <https://github.com/Pentox/opaloby/>."
+			+ "\n**Tip:** Use `%shelp` for more commands!", Handler.PREFIX, 
 			Handler.PREFIX);
 	
 	public static String generateWarning (String message) {

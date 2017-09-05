@@ -13,7 +13,11 @@ import sx.blah.discord.handle.obj.Permissions;
 import sx.blah.discord.util.DiscordException;
 
 public class Functions { // for command actions
-
+	/**
+	 * Sets up a server.
+	 * @param event The event detected by the EventSubscriber in Handler.java.
+	 * @param message The ImprovedString object containing the message content.
+	 */
 	public static void setup(MessageReceivedEvent event, ImprovedString message) {
 		if (event.getAuthor().getPermissionsForGuild(event.getGuild())
 				.contains(Permissions.ADMINISTRATOR)) {
@@ -54,7 +58,11 @@ public class Functions { // for command actions
 					"only administrators are allowed to do that."));
 		}
 	}
-
+	/**
+	 * Updates server configuration.
+	 * @param event The event detected by the EventSubscriber in Handler.java.
+	 * @param message The ImprovedString object containing the message content.
+	 */
 	public static void resetup(MessageReceivedEvent event, ImprovedString message) {
 		if (event.getAuthor().getPermissionsForGuild(event.getGuild())
 				.contains(Permissions.ADMINISTRATOR)) {
@@ -94,7 +102,14 @@ public class Functions { // for command actions
 					"only administrators are allowed to do that."));
 		}
 	}
-
+	/**
+	 * Starts an open lobby.
+	 * @param event The event detected by the EventSubscriber in Handler.java.
+	 * @param message The ImprovedString object containing the message content.
+	 * @param channelId The channel ID of the OL channel.
+	 * @param roleMissing If the OLM role is missing.
+	 * @param olmrole The OLM role.
+	 */
 	public static void start(MessageReceivedEvent event, ImprovedString message,
 			long channelId, boolean roleMissing, IRole olmrole) {
 		try {
@@ -164,7 +179,10 @@ public class Functions { // for command actions
 			event.getChannel().sendMessage(Utils.generateError());
 		}
 	}
-
+	/**
+	 * Joins you to an open lobby. (detected using reaction)
+	 * @param event The event detected by the EventSubscriber in Handler.java.
+	 */
 	public static void join(ReactionAddEvent event) {
 		try {
 			System.out.println("Reached 6");
@@ -189,12 +207,18 @@ public class Functions { // for command actions
 								";"), link
 				);
 				event.getUser().getOrCreatePMChannel().sendMessage(send);
+			} else {
+				event.getChannel().sendMessage(Utils.generateDeny("enter", "there is no open lobby "
+						+ "running on this server."));
 			}
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
 	}
-
+	/**
+	 * Sends joins you to an open lobby.
+	 * @param event The event detected by the EventSubscriber in Handler.java.
+	 */
 	public static void join(MessageReceivedEvent event) {
 		try {
 			String query = String.format("SELECT link, description, server_id, author_id "
@@ -218,12 +242,20 @@ public class Functions { // for command actions
 								";"), link
 				);
 				event.getAuthor().getOrCreatePMChannel().sendMessage(send);
+			} else {
+				event.getChannel().sendMessage(Utils.generateDeny("enter", "there is no open lobby "
+						+ "running on this server."));
 			}
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
 	}
-
+	/**
+	 * Stops open lobby.
+	 * @param event The event detected by the EventSubscriber in Handler.java.
+	 * @param roleMissing If the OLM role is missing.
+	 * @param olmrole The OLM role.
+	 */
 	public static void stop(MessageReceivedEvent event, boolean roleMissing, IRole olmrole) {
 		try {
 			String query = String.format("SELECT author_id FROM lobbies WHERE server_id=%d",
@@ -275,15 +307,36 @@ public class Functions { // for command actions
 			ex.printStackTrace();
 		}
 	}
-
+	/**
+	 * Sends the help message.
+	 * @param event The event detected by the EventSubscriber in Handler.java.
+	 */
 	public static void help(MessageReceivedEvent event) {
-		event.getChannel().sendMessage(Utils.HELP_MESSAGE);
+		try {
+			event.getAuthor().getOrCreatePMChannel().sendMessage(Utils.HELP_MESSAGE);
+			event.getChannel().sendMessage(Utils.generateSuccess("Help sent in DM."));
+		} catch (DiscordException ex) {
+			event.getChannel().sendMessage(Utils.generateWarning("I can't DM you! It looks like "
+					+ "you've blocked me or disabled messages from server members..."));
+		}
 	}
-
+	/**
+	 * Sends the Terms of Service message.
+	 * @param event The event detected by the EventSubscriber in Handler.java.
+	 */
 	public static void tos(MessageReceivedEvent event) {
-		event.getChannel().sendMessage(Utils.TOS);
+		try {
+			event.getAuthor().getOrCreatePMChannel().sendMessage(Utils.TOS);
+			event.getChannel().sendMessage(Utils.generateSuccess("Details sent in DM."));
+		} catch (DiscordException ex) {
+			event.getChannel().sendMessage(Utils.generateWarning("I can't DM you! It looks like "
+					+ "you've blocked me or disabled messages from server members..."));
+		}
 	}
-
+	/**
+	 * Sends the testing server invite.
+	 * @param event The event detected by the EventSubscriber in Handler.java.
+	 */
 	public static void test(MessageReceivedEvent event) {
 		try {
 			event.getAuthor().getOrCreatePMChannel().sendMessage(String.format("Hello there %s! Help test this bot (and other bots made by Pentox) by joining "
@@ -294,7 +347,12 @@ public class Functions { // for command actions
 					+ "apparently blocked me or disabled messages from server members..."));
 		}
 	}
-
+	
+	/**
+	 * Performs operations on blacklist.
+	 * @param event The event detected by the EventSubscriber in Handler.java.
+	 * @param message The ImprovedString object containing the message content.
+	 */
 	public static void blacklist(MessageReceivedEvent event, ImprovedString message) {
 		try {
 			if (MainBot.client.getApplicationOwner().getLongID()
@@ -377,8 +435,17 @@ public class Functions { // for command actions
 			ex.printStackTrace();
 		}
 	}
-
+	/**
+	 * Sends help for adding bot to a server.
+	 * @param event The event detected by the EventSubscriber in Handler.java.
+	 */
 	public static void addbot(MessageReceivedEvent event) {
-		event.getChannel().sendMessage(Utils.ADDBOT);
+		try {
+			event.getAuthor().getOrCreatePMChannel().sendMessage(Utils.ADDBOT);
+			event.getChannel().sendMessage(Utils.generateSuccess("Details sent in DM."));
+		} catch (DiscordException ex) {
+			event.getChannel().sendMessage(Utils.generateWarning("I can't DM you! It looks like "
+					+ "you've blocked me or disabled messages from server members..."));
+		}
 	}
 }

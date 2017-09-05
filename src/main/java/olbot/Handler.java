@@ -94,6 +94,35 @@ public class Handler extends MainBot {
 						&& !event.getAuthor().isBot()) {
 					Functions.setup(event, message);
 				}
+				else if (command.equals(PREFIX + "help") && !isBlacklisted(event.getAuthor())
+					&& !event.getAuthor().isBot()) {
+					Functions.help(event);
+				}
+				else if (command.equals(PREFIX + "tos") && !isBlacklisted(event.getAuthor())
+					&& !event.getAuthor().isBot()) {
+					Functions.tos(event);
+				}
+				else if (command.equals(PREFIX + "test") && !isBlacklisted(event.getAuthor())
+					&& !event.getAuthor().isBot()) {
+					Functions.test(event);
+				}
+				else if (command.equals(PREFIX + "blacklist") && !isBlacklisted(event.getAuthor())
+					&& !event.getAuthor().isBot()) {
+					Functions.blacklist(event, message);
+				}
+				else if (command.equals(PREFIX + "addbot") && !isBlacklisted(event.getAuthor())
+					&& !event.getAuthor().isBot()) {
+					Functions.addbot(event);
+				}
+				else if (command.equals(PREFIX + "start")
+						|| command.equals(PREFIX + "stop")
+						|| command.equals(PREFIX + "join")
+						) {
+					event.getChannel().sendMessage(Utils.generateWarning(String.format("Those commands are only"
+							+ " available for registered servers. If you are an admin, you can "
+							+ "do that by executing `%ssetup` explained more in depth using "
+							+ "`%shelp`.", PREFIX, PREFIX)));
+				}
 			}
 		} catch (Exception ex) {
 			ex.printStackTrace();
