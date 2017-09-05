@@ -27,6 +27,11 @@ public class Handler extends MainBot {
 			+ "id INT AUTO_INCREMENT, author_id BIGINT NOT NULL, server_id BIGINT NOT NULL, link VARCHAR(256) NOT NULL,"
 			+ "description VARCHAR(200) NOT NULL, message_id BIGINT NOT NULL, PRIMARY KEY(id))",
 		};
+		
+		for (String query : queries) {
+			Handler.executeUpdate(query);
+		}
+		
 		System.out.println("Ready!");
 
 		MainBot.client.changePlayingText(PREFIX + "help");
