@@ -181,7 +181,7 @@ public class Functions { // for command actions
 									if (link.matches("(https?://)?(www\\.)?.{3,100}\\.+.{2,100}")) {
 										IChannel channel = MainBot.client.getChannelByID(channelId);
 										if (channel != null) {
-
+											event.getMessage().delete();
 											String send = String.format(
 													"__**@here New Open Lobby by <@%d>**__:\n\n"
 													+ "%s\n\n"
