@@ -1,6 +1,6 @@
-# Opaloby
+# Lobbster
 ## About
-Opaloby is a Java Discord bot to automate Open Lobbies for game parties, created by Pentox#6935. Data is kept in a MySQL database.
+Lobbster is a Java Discord bot to automate Open Lobbies for game parties, created by Pentox#6935. Data is kept in a MySQL database.
 
 ## How to use
 This bot is already hosted by Pentox, so you don't have to compile it yourself to use it. Go to a server where the bot is available, and execute `<addbot`.
