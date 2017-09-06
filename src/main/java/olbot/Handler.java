@@ -48,8 +48,7 @@ public class Handler extends MainBot {
 	public void messageReceived(MessageReceivedEvent event) {
 		try {
 			if (!gReady && client.isReady()) {
-				if (client.getOurUser().getPresence().getPlayingText().get()
-						.isEmpty()) {
+				if (!client.getOurUser().getPresence().getPlayingText().isPresent()) {
 					client.changePlayingText(PREFIX + "help");
 				}
 				System.out.println("Ready!");
