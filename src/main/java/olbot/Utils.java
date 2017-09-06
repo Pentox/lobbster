@@ -6,10 +6,11 @@ public class Utils {
 			+ Handler.PREFIX + "help` for help.";
 	public static final String LOBBY_OVER = "@here Open lobby over!";
 	public static final String HELP_MESSAGE = String.format(
-		":information_source: **__Opaloby__**:\nBleep bloop! I am a bot. Pentox#6935 created "
+		":information_source: **__Lobbster__**:\nBleep bloop! I am a bot. Pentox#6935 created "
 				+ "me to automate open lobbies. To add me to your server, execute `%saddbot`. "
 				+ "Here are my commands!\n`%ssetup [open lobby channel mention] [open lobby "
-				+ "maker role name];[open lobby participant role name]`: Sets up this server with "
+				+ "maker role name];[open lobby participant role name];[open lobby host name]`:"
+				+ " Sets up this server with "
 				+ "the specified arguments. You "
 				+ "must be an administrator to execute this command. Note that if you execute "
 				+ "this command again after you've already set up the server, the bot will "
@@ -23,12 +24,12 @@ public class Utils {
 				+ " administrator. This command stops the current open lobby, meaning that no "
 				+ "more people can join.\n`%shelp`: Send help."
 				+ "\n`%stos`: Shows the terms of service for this bot.\n\n"
-				+ "Source code of the bot: <https://github.com/Pentox/opaloby/>.",
+				+ "Source code of the bot: <https://github.com/Pentox/lobbster/>.",
 				Handler.PREFIX, Handler.PREFIX, Handler.PREFIX, Handler.PREFIX, Handler.PREFIX,
 				Handler.PREFIX, Handler.PREFIX, Handler.PREFIX
 		);
 	
-	public static final String TOS = ":information_source: **__Opaloby Terms of Service__**:\nBy"
+	public static final String TOS = ":information_source: **__Lobbster Terms of Service__**:\nBy"
 			+ " using this bot, you agree to the following terms of service:\n**1.** "
 			+ "You acknowledge that this bot and all of its components, excluding the official"
 			+ " Discord API, are not created, endorsed, sponsored, owned, developed, "
@@ -50,19 +51,22 @@ public class Utils {
 			+ "you don't have one. You can name it whatever you want BUT IT SHOULD NOT "
 			+ "CONTAIN SEMI-COLONS.\nSecond, create an **Open Lobby Participant** role if "
 			+ "you don't have one. Again, you can name it whatever you want BUT IT SHOULD NOT "
-			+ "CONTAIN SEMI-COLONS. Place BOTH of the roles UNDER the bot role (\"Opaloby\"). "
+			+ "CONTAIN SEMI-COLONS.\nThird, create an **Open Lobby Host** role if "
+			+ "you don't have one. Once more, you can name it whatever you want BUT IT SHOULD NOT "
+			+ "CONTAIN SEMI-COLONS. Place ALL THREE of the roles UNDER the bot role (\"Lobbster\"). "
 			+ "Last, you will need to create an **open lobby channel**, if you haven't already. "
 			+ "That's the channel where"
-			+ " the bot will announce open lobbies and send information about them.\n"
+			+ " the bot will announce open lobbies and send information about them.\n\n"
 			+ "Now, use this link: "
 			+ "<https://discordapp.com/oauth2/authorize?client_id=354264151520051201&scope="
 			+ "bot&permissions=268577856> to add the bot to your server.\n"
 			+ "Once the bot's in your server, there is one more step.\nExecute the command "
-			+ "`%ssetup [1] [2];[3]`. Mention the channel you created in place of **[1]** and "
-			+ "replace **[2]** with the name of the manager role you created, and replace "
-			+ "**[3]** with the participant role you created. Please note the seperating semi-colon.\n"
+			+ "`%ssetup [1] [2];[3];[4]`. Mention the channel you created in place of **[1]**, "
+			+ "replace **[2]** with the name of the manager role you created, replace "
+			+ "**[3]** with the name of participant role you created, and finally replace **[4]**"
+			+ " With the name of the host role you created. Please note the seperating semi-colon.\n"
 			+ "You're now set! Give the manager role to people who you want to be able to make open "
-			+ "lobbies. Enjoy!\n\nSource code: <https://github.com/Pentox/opaloby/>."
+			+ "lobbies. Enjoy!\n\nSource code: <https://github.com/Pentox/lobbster/>."
 			+ "\n**Tip:** Use `%shelp` for more commands!", Handler.PREFIX, 
 			Handler.PREFIX);
 	

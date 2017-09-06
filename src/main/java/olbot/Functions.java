@@ -14,8 +14,10 @@ import sx.blah.discord.handle.obj.Permissions;
 import sx.blah.discord.util.DiscordException;
 
 public class Functions { // for command actions
+
 	/**
 	 * Sets up a server.
+	 *
 	 * @param event The event detected by the EventSubscriber in Handler.java.
 	 * @param message The ImprovedString object containing the message content.
 	 */
@@ -28,23 +30,30 @@ public class Functions { // for command actions
 				if (message.words.size() >= 3) {
 					String managerRole = message.getContent(2, " ").split(";")[0].trim();
 					String participantRole = message.getContent(2, " ").split(";")[1].trim();
+					String hostRole = message.getContent(2, " ").split(";")[2].trim();
 					if (event.getGuild().getRolesByName(managerRole).size() >= 1
-							&& event.getGuild().getRolesByName(participantRole).size() >= 1) {
+							&& event.getGuild().getRolesByName(participantRole).size() >= 1
+							&& event.getGuild().getRolesByName(hostRole).size() >= 1) {
 						long channelId = channel.getLongID();
 						String query = String.format("INSERT INTO servers"
-								+ "(server_id, channel_id, manager_role, participant_role) "
-								+ "VALUES(%d, %d, '%s', '%s')",
+								+ "(server_id, channel_id, manager_role, participant_role, "
+								+ "host_role, start_time, lobby_count) "
+								+ "VALUES(%d, %d, '%s', '%s', '%s', %d, 0)",
 								event.getGuild().getLongID(),
 								channelId,
-								managerRole.replace("'", "\\'"), 
-								participantRole.replace("'", "\\'"));
+								managerRole.replace("'", "\\'"),
+								participantRole.replace("'", "\\'"),
+								hostRole.replace("'", "\\'"),
+								System.currentTimeMillis() + 86400000);
+
 						Handler.executeUpdate(query);
 						event.getChannel().sendMessage(
 								Utils.generateSuccess(
-										String.format("Server has been set up with "
-												+ "channel <#%d> and Open Lobby Maker role "
-												+ "**%s** and Open Lobby Participant role **%s**.",
-												channelId, managerRole, participantRole))
+										String.format("Server has been set up with open lobby "
+												+ "channel <#%d>, Open Lobby Maker role "
+												+ "**%s**, Open Lobby Participant role **%s**, and Open Lobby "
+												+ "Host role **%s**.",
+												channelId, managerRole, participantRole, hostRole))
 						);
 					} else {
 						event.getChannel().sendMessage(Utils.generateWarning(
@@ -63,8 +72,10 @@ public class Functions { // for command actions
 					"only administrators are allowed to do that."));
 		}
 	}
+
 	/**
 	 * Updates server configuration.
+	 *
 	 * @param event The event detected by the EventSubscriber in Handler.java.
 	 * @param message The ImprovedString object containing the message content.
 	 */
@@ -77,24 +88,29 @@ public class Functions { // for command actions
 				if (message.words.size() >= 3) {
 					String managerRole = message.getContent(2, " ").split(";")[0].trim();
 					String participantRole = message.getContent(2, " ").split(";")[1].trim();
+					String hostRole = message.getContent(2, " ").split(";")[2].trim();
 					if (event.getGuild().getRolesByName(managerRole).size() >= 1
-							&& event.getGuild().getRolesByName(participantRole).size() >= 1) {
+							&& event.getGuild().getRolesByName(participantRole).size() >= 1
+							&& event.getGuild().getRolesByName(hostRole).size() >= 1) {
 						long channelId = channel.getLongID();
-						String query = String.format("UPDATE servers"
-								+ " SET channel_id=%d, manager_role='%s', participant_role"
-								+ "='%s' WHERE server_id=%d",
+						String query = String.format("UPDATE servers SET "
+								+ "channel_id=%d, manager_role='%s', "
+								+ "participant_role='%s', "
+								+ "host_role='%s' WHERE server_id=%d",
 								channelId,
-								managerRole.replace("'", "\\'"), 
+								managerRole.replace("'", "\\'"),
 								participantRole.replace("'", "\\'"),
-								event.getGuild().getLongID()
-								);
+								hostRole.replace("'", "\\'"),
+								event.getGuild().getLongID());
+
 						Handler.executeUpdate(query);
 						event.getChannel().sendMessage(
 								Utils.generateSuccess(
-										String.format("Server has been modified to:\nOpen Lobby "
-												+ "channel <#%d> and Open Lobby Maker role "
-												+ "**%s** and Open Lobby Participant role **%s**.",
-												channelId, managerRole, participantRole))
+										String.format("Server settings have been update to open lobby "
+												+ "channel <#%d>, Open Lobby Maker role "
+												+ "**%s**, Open Lobby Participant role **%s**, and Open Lobby "
+												+ "Host role **%s**.",
+												channelId, managerRole, participantRole, hostRole))
 						);
 					} else {
 						event.getChannel().sendMessage(Utils.generateWarning(
@@ -113,16 +129,19 @@ public class Functions { // for command actions
 					"only administrators are allowed to do that."));
 		}
 	}
+
 	/**
 	 * Starts an open lobby.
+	 *
 	 * @param event The event detected by the EventSubscriber in Handler.java.
 	 * @param message The ImprovedString object containing the message content.
 	 * @param channelId The channel ID of the OL channel.
 	 * @param roleMissing If the OLM role is missing.
 	 * @param olmrole The OLM role.
+	 * @param hostRole The OL host role.
 	 */
 	public static void start(MessageReceivedEvent event, ImprovedString message,
-			long channelId, boolean roleMissing, IRole olmrole) {
+			long channelId, boolean roleMissing, IRole olmrole, IRole hostRole) {
 		try {
 			if (!roleMissing) {
 				if (event.getAuthor().getPermissionsForGuild(event.getGuild()).contains(Permissions.ADMINISTRATOR)
@@ -134,49 +153,68 @@ public class Functions { // for command actions
 						event.getChannel().sendMessage(Utils.generateDeny("start an open lobby",
 								"there is one currently running."));
 					} else {
-						if (message.words.size() >= 3) {
-							long authorId = event.getAuthor().getLongID();
-							long serverId = event.getGuild().getLongID();
-							String link = message.getWord(1);
-							if (!link.startsWith("http://") && !link.startsWith("https://")) {
-								link = "http://" + link;
+						query = String.format("SELECT lobby_count FROM servers WHERE "
+								+ "server_id=%d", event.getGuild().getLongID());
+						ResultSet s = Handler.executeQuery(query);
+						boolean canCreate = true;
+						if (s.next()) {
+							if (s.getInt(1) >= 2) {
+								canCreate = false;
 							}
-							String description = message.getContent(2, " ");
-							if (link.length() > 100 || description.length() > 200) {
-								event.getChannel().sendMessage(Utils.generateWarning("Link or description "
-										+ "are too long."));
-							} else {
-								IChannel channel = MainBot.client.getChannelByID(channelId);
-								if (channel != null) {
-
-									String send = String.format(
-											"__**@here New Open Lobby by <@%d>**__:\n\n"
-											+ "%s\n\n"
-											+ "Click the check-mark reaction or type `%sjoin` to join. "
-											+ "Uncheck the reaction or type `%sleave` to leave.\n"
-											+ "**Tip:** If you don't get a Direct Message you either blocked the bot "
-											+ "or disabled Direct Messages from server members.",
-											event.getAuthor().getLongID(), description.replace("&sc",
-											";"), Handler.PREFIX, Handler.PREFIX
-									);
-									IMessage target = channel.sendMessage(send);
-									query = String.format("INSERT INTO lobbies(author_id, server_id,"
-											+ "link, description, message_id) VALUES("
-											+ "%d, %d, '%s', '%s', %d)", authorId, serverId,
-											link.replace("'", "\\'"), description.replace("'", "\\'"), target.getLongID());
-									Handler.executeUpdate(query);
-									Thread.sleep(300);
-									target.addReaction(Handler.REACTION);
-									event.getChannel().sendMessage(Utils.generateSuccess(
-											"Open lobby started."));
-								} else {
-									event.getChannel().sendMessage(Utils.generateWarning(
-											"Open Lobby channel cannot be seen by the bot "
-											+ "or was deleted."));
+						}
+						if (canCreate) {
+							if (message.words.size() >= 3) {
+								long authorId = event.getAuthor().getLongID();
+								long serverId = event.getGuild().getLongID();
+								String link = message.getWord(1);
+								if (!link.startsWith("http://") && !link.startsWith("https://")) {
+									link = "http://" + link;
 								}
+								String description = message.getContent(2, " ");
+								if (link.length() > 100 || description.length() > 200) {
+									event.getChannel().sendMessage(Utils.generateWarning("Link or description "
+											+ "are too long."));
+								} else {
+									IChannel channel = MainBot.client.getChannelByID(channelId);
+									if (channel != null) {
+
+										String send = String.format(
+												"__**@here New Open Lobby by <@%d>**__:\n\n"
+												+ "%s\n\n"
+												+ "Click the check-mark reaction or type `%sjoin` to join. "
+												+ "Uncheck the reaction or type `%sleave` to leave.\n"
+												+ "**Tip:** If you don't get a Direct Message you either blocked the bot "
+												+ "or disabled Direct Messages from server members.",
+												event.getAuthor().getLongID(), description.replace("&sc",
+												";"), Handler.PREFIX, Handler.PREFIX
+										);
+										IMessage target = channel.sendMessage(send);
+										query = String.format("INSERT INTO lobbies(author_id, server_id,"
+												+ "link, description, message_id) VALUES("
+												+ "%d, %d, '%s', '%s', %d)", authorId, serverId,
+												link.replace("'", "\\'"), description.replace("'", "\\'"), target.getLongID());
+										Handler.executeUpdate(query);
+										query = String.format("UPDATE servers SET lobby_count=lobby_count+1 WHERE "
+												+ "server_id=%d", event.getGuild().getLongID());
+										Handler.executeUpdate(query);
+										Thread.sleep(300);
+										target.addReaction(Handler.REACTION);
+										Thread.sleep(300);
+										event.getAuthor().addRole(hostRole);
+										event.getChannel().sendMessage(Utils.generateSuccess(
+												"Open lobby started."));
+									} else {
+										event.getChannel().sendMessage(Utils.generateWarning(
+												"Open Lobby channel cannot be seen by the bot "
+												+ "or was deleted."));
+									}
+								}
+							} else {
+								event.getChannel().sendMessage(Utils.generateWarning("Not enough data."));
 							}
 						} else {
-							event.getChannel().sendMessage(Utils.generateWarning("Not enough data."));
+							event.getChannel().sendMessage(Utils.generateDeny(
+									"create open lobby","the daily limit is reached."));
 						}
 					}
 				} else {
@@ -191,8 +229,10 @@ public class Functions { // for command actions
 			event.getChannel().sendMessage(Utils.generateError());
 		}
 	}
+
 	/**
 	 * Joins you to an open lobby (Detected using reaction).
+	 *
 	 * @param event The event detected by the EventSubscriber in Handler.java.
 	 * @param participantRole The Open Lobby Participant role to use.
 	 */
@@ -228,8 +268,10 @@ public class Functions { // for command actions
 			ex.printStackTrace();
 		}
 	}
+
 	/**
 	 * Sends joins you to an open lobby.
+	 *
 	 * @param event The event detected by the EventSubscriber in Handler.java.
 	 * @param participantRole The Open Lobby Participant role to use.
 	 */
@@ -256,7 +298,9 @@ public class Functions { // for command actions
 								";"), link
 				);
 				event.getAuthor().getOrCreatePMChannel().sendMessage(send);
-				if (participantRole != null) event.getAuthor().addRole(participantRole);
+				if (participantRole != null) {
+					event.getAuthor().addRole(participantRole);
+				}
 				Thread.sleep(200);
 				event.getChannel().sendMessage(Utils.generateSuccess("Invite sent in DM."));
 			} else {
@@ -267,25 +311,29 @@ public class Functions { // for command actions
 			ex.printStackTrace();
 		}
 	}
+
 	/**
 	 * Removes the Open Lobby Participant role.
+	 *
 	 * @param event The event detected by the EventSubscriber in Handler.java.
 	 * @param participantRole The participant role.
+	 * @param hostRole The OL host role.
 	 */
-	public static void leave (ReactionRemoveEvent event, IRole participantRole) {
+	public static void leave(ReactionRemoveEvent event, IRole participantRole, IRole hostRole) {
 		try {
 			String query = String.format("SELECT id "
 					+ "FROM lobbies WHERE server_id=%d LIMIT 1", event.getGuild().getLongID());
 			ResultSet s = Handler.executeQuery(query);
 			if (s.next()) {
-				if (participantRole != null &&
-						event.getUser().getRolesForGuild(event.getGuild())
-						.contains(participantRole)
-						){
+				if (participantRole != null
+						&& event.getUser().getRolesForGuild(event.getGuild())
+								.contains(participantRole)
+						&& !event.getUser().getRolesForGuild(event.getGuild())
+								.contains(hostRole)) {
 					event.getUser().removeRole(participantRole);
 					try {
 						event.getUser().getOrCreatePMChannel().sendMessage("You have left the "
-							+ "open lobby!");
+								+ "open lobby!");
 					} catch (DiscordException ex) {
 					}
 				}
@@ -294,25 +342,36 @@ public class Functions { // for command actions
 			ex.printStackTrace();
 		}
 	}
-	
+
 	/**
 	 * Removes the Open Lobby Participant role.
+	 *
 	 * @param event The event detected by the EventSubscriber in Handler.java.
 	 * @param participantRole The participant role.
+	 * @param hostRole The OL host role.
 	 */
-	public static void leave (MessageReceivedEvent event, IRole participantRole) {
+	public static void leave(MessageReceivedEvent event, IRole participantRole, IRole hostRole) {
 		try {
 			String query = String.format("SELECT id "
 					+ "FROM lobbies WHERE server_id=%d LIMIT 1", event.getGuild().getLongID());
 			ResultSet s = Handler.executeQuery(query);
 			if (s.next()) {
-				if (participantRole != null &&
-						event.getAuthor().getRolesForGuild(event.getGuild())
-						.contains(participantRole)
-						){
+				if (participantRole != null
+						&& event.getAuthor().getRolesForGuild(event.getGuild())
+								.contains(participantRole)
+						&& !event.getAuthor().getRolesForGuild(event.getGuild())
+								.contains(hostRole)) {
 					event.getAuthor().removeRole(participantRole);
 					event.getChannel().sendMessage(Utils.generateSuccess("You have left the open "
 							+ "lobby."));
+				} else if (!event.getAuthor().getRolesForGuild(event.getGuild())
+						.contains(participantRole)) {
+					event.getChannel().sendMessage(Utils.generateDeny("leave", "you are not a member "
+							+ "in the open lobby."));
+				} else if (event.getAuthor().getRolesForGuild(event.getGuild())
+						.contains(hostRole)) {
+					event.getChannel().sendMessage(Utils.generateDeny("leave", "you are the host of this "
+							+ "open lobby!"));
 				}
 			} else {
 				event.getChannel().sendMessage(Utils.generateDeny("leave", "there is no open lobby "
@@ -322,14 +381,18 @@ public class Functions { // for command actions
 			ex.printStackTrace();
 		}
 	}
+
 	/**
 	 * Stops open lobby.
+	 *
 	 * @param event The event detected by the EventSubscriber in Handler.java.
 	 * @param roleMissing If the OLM role is missing.
 	 * @param olmrole The OLM role.
 	 * @param prole The Open Lobby Participant role.
+	 * @param hostRole the OL host role.
 	 */
-	public static void stop(MessageReceivedEvent event, boolean roleMissing, IRole olmrole, IRole prole) {
+	public static void stop(MessageReceivedEvent event, boolean roleMissing, IRole olmrole, IRole prole,
+			IRole hostRole) {
 		try {
 			String query = String.format("SELECT author_id FROM lobbies WHERE server_id=%d",
 					event.getGuild().getLongID());
@@ -359,6 +422,8 @@ public class Functions { // for command actions
 									+ "=%d", event.getGuild().getLongID());
 							Handler.executeUpdate(query);
 							channel.sendMessage(Utils.LOBBY_OVER);
+							Thread.sleep(300);
+							event.getAuthor().removeRole(hostRole);
 							for (IUser user : event.getGuild().getUsersByRole(prole)) {
 								Thread.sleep(200);
 								user.removeRole(prole);
@@ -384,8 +449,10 @@ public class Functions { // for command actions
 			ex.printStackTrace();
 		}
 	}
+
 	/**
 	 * Sends the help message.
+	 *
 	 * @param event The event detected by the EventSubscriber in Handler.java.
 	 */
 	public static void help(MessageReceivedEvent event) {
@@ -397,8 +464,10 @@ public class Functions { // for command actions
 					+ "you've blocked me or disabled messages from server members..."));
 		}
 	}
+
 	/**
 	 * Sends the Terms of Service message.
+	 *
 	 * @param event The event detected by the EventSubscriber in Handler.java.
 	 */
 	public static void tos(MessageReceivedEvent event) {
@@ -410,8 +479,10 @@ public class Functions { // for command actions
 					+ "you've blocked me or disabled messages from server members..."));
 		}
 	}
+
 	/**
 	 * Sends the testing server invite.
+	 *
 	 * @param event The event detected by the EventSubscriber in Handler.java.
 	 */
 	public static void test(MessageReceivedEvent event) {
@@ -424,9 +495,10 @@ public class Functions { // for command actions
 					+ "apparently blocked me or disabled messages from server members..."));
 		}
 	}
-	
+
 	/**
 	 * Performs operations on blacklist.
+	 *
 	 * @param event The event detected by the EventSubscriber in Handler.java.
 	 * @param message The ImprovedString object containing the message content.
 	 */
@@ -456,51 +528,49 @@ public class Functions { // for command actions
 						event.getChannel().sendMessage(Utils.generateDeny("add to blacklist",
 								"there are no user mentioned."));
 					}
-				}
-			  
-				else if (operator.equals("show")){
-						String finalMessage = "";
-						query = "SELECT user_id FROM blacklist";
-						ResultSet s = Handler.executeQuery(query);
+				} else if (operator.equals("show")) {
+					String finalMessage = "";
+					query = "SELECT user_id FROM blacklist";
+					ResultSet s = Handler.executeQuery(query);
 
-						while (s.next()) {
-							IUser user = MainBot.client.getUserByID(s.getLong(1));
-							if (user != null) {
-								finalMessage += (finalMessage.isEmpty() ? "" : "\n") + String.format(
-										"- **%s#%s** (**%d**)",
-										user.getName(), user.getDiscriminator(),
-										user.getLongID());
-							} else {
-								finalMessage += (finalMessage.isEmpty() ? "" : "\n") + String.format("- [**absent user**] (**%d**)",
-										s.getLong(1));
-							}
-						}
-						finalMessage = finalMessage.trim().isEmpty() ? "*[**no users blacklisted!**]*" : finalMessage
-								.trim();
-						event.getChannel().sendMessage(Utils.generateSuccess("Blacklist:\n")
-								+ finalMessage);
-				}else if (operator.equals("remove")){
-						if (mentions.size() >= 1) {
-							for (IUser user : mentions) {
-								long id = user.getLongID();
-								query = String.format("SELECT user_id FROM blacklist WHERE "
-										+ "user_id=%d", id);
-								if (Handler.executeQuery(query).next()) {
-									query = String.format("DELETE FROM blacklist WHERE"
-											+ " user_id=%d", id);
-									Handler.executeUpdate(query);
-								}
-							}
-							event.getChannel().sendMessage(Utils.generateSuccess("User(s) "
-									+ "has/have been **removed** from the blacklist."));
+					while (s.next()) {
+						IUser user = MainBot.client.getUserByID(s.getLong(1));
+						if (user != null) {
+							finalMessage += (finalMessage.isEmpty() ? "" : "\n") + String.format(
+									"- **%s#%s** (**%d**)",
+									user.getName(), user.getDiscriminator(),
+									user.getLongID());
 						} else {
-							event.getChannel().sendMessage(Utils.generateDeny("add to blacklist",
-									"there are no user mentioned."));
+							finalMessage += (finalMessage.isEmpty() ? "" : "\n") + String.format("- [**absent user**] (**%d**)",
+									s.getLong(1));
 						}
-				}else if (operator.equals("clear")) {
-						query = "DELETE FROM blacklist";
-						Handler.executeUpdate(query);
-						event.getChannel().sendMessage(Utils.generateSuccess("Blacklist has been cleared."));
+					}
+					finalMessage = finalMessage.trim().isEmpty() ? "*[**no users blacklisted!**]*" : finalMessage
+							.trim();
+					event.getChannel().sendMessage(Utils.generateSuccess("Blacklist:\n")
+							+ finalMessage);
+				} else if (operator.equals("remove")) {
+					if (mentions.size() >= 1) {
+						for (IUser user : mentions) {
+							long id = user.getLongID();
+							query = String.format("SELECT user_id FROM blacklist WHERE "
+									+ "user_id=%d", id);
+							if (Handler.executeQuery(query).next()) {
+								query = String.format("DELETE FROM blacklist WHERE"
+										+ " user_id=%d", id);
+								Handler.executeUpdate(query);
+							}
+						}
+						event.getChannel().sendMessage(Utils.generateSuccess("User(s) "
+								+ "has/have been **removed** from the blacklist."));
+					} else {
+						event.getChannel().sendMessage(Utils.generateDeny("add to blacklist",
+								"there are no user mentioned."));
+					}
+				} else if (operator.equals("clear")) {
+					query = "DELETE FROM blacklist";
+					Handler.executeUpdate(query);
+					event.getChannel().sendMessage(Utils.generateSuccess("Blacklist has been cleared."));
 				} else {
 					event.getChannel().sendMessage(Utils.INVALID_FORMAT);
 				}
@@ -512,8 +582,10 @@ public class Functions { // for command actions
 			ex.printStackTrace();
 		}
 	}
+
 	/**
 	 * Sends help for adding bot to a server.
+	 *
 	 * @param event The event detected by the EventSubscriber in Handler.java.
 	 */
 	public static void addbot(MessageReceivedEvent event) {
@@ -524,5 +596,14 @@ public class Functions { // for command actions
 			event.getChannel().sendMessage(Utils.generateWarning("I can't DM you! It looks like "
 					+ "you've blocked me or disabled messages from server members..."));
 		}
+	}
+	
+	/**
+	 * Update the lobby limits
+	 */
+	public static synchronized void update () {
+		String query = String.format("UPDATE servers SET lobby_count=0, start_time=%d WHERE "
+				+ "start_time <= %d", System.currentTimeMillis()+86400000, System.currentTimeMillis());
+		Handler.executeUpdate(query);
 	}
 }
