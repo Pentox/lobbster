@@ -168,45 +168,52 @@ public class Functions { // for command actions
 								long serverId = event.getGuild().getLongID();
 								String link = message.getWord(1);
 								if (!link.startsWith("http://") && !link.startsWith("https://")) {
-									link = "http://" + link;
+									link = "http://" + link.trim();
 								}
 								String description = message.getContent(2, " ");
 								if (link.length() > 100 || description.length() > 200) {
 									event.getChannel().sendMessage(Utils.generateWarning("Link or description "
 											+ "are too long."));
+								} else if (link.length() < 5 || description.length() > 2) {
+									event.getChannel().sendMessage(Utils.generateWarning("Link or description "
+											+ "are too short."));
 								} else {
-									IChannel channel = MainBot.client.getChannelByID(channelId);
-									if (channel != null) {
+									if (link.matches("(https?://)?(www\\.)?.{3,100}\\.+.{2,100}")) {
+										IChannel channel = MainBot.client.getChannelByID(channelId);
+										if (channel != null) {
 
-										String send = String.format(
-												"__**@here New Open Lobby by <@%d>**__:\n\n"
-												+ "%s\n\n"
-												+ "Click the check-mark reaction or type `%sjoin` to join. "
-												+ "Uncheck the reaction or type `%sleave` to leave.\n"
-												+ "**Tip:** If you don't get a Direct Message you either blocked the bot "
-												+ "or disabled Direct Messages from server members.",
-												event.getAuthor().getLongID(), description.replace("&sc",
-												";"), Handler.PREFIX, Handler.PREFIX
-										);
-										IMessage target = channel.sendMessage(send);
-										query = String.format("INSERT INTO lobbies(author_id, server_id,"
-												+ "link, description, message_id) VALUES("
-												+ "%d, %d, '%s', '%s', %d)", authorId, serverId,
-												link.replace("'", "\\'"), description.replace("'", "\\'"), target.getLongID());
-										Handler.executeUpdate(query);
-										query = String.format("UPDATE servers SET lobby_count=lobby_count+1 WHERE "
-												+ "server_id=%d", event.getGuild().getLongID());
-										Handler.executeUpdate(query);
-										Thread.sleep(300);
-										target.addReaction(Handler.REACTION);
-										Thread.sleep(300);
-										event.getAuthor().addRole(hostRole);
-										event.getChannel().sendMessage(Utils.generateSuccess(
-												"Open lobby started."));
+											String send = String.format(
+													"__**@here New Open Lobby by <@%d>**__:\n\n"
+													+ "%s\n\n"
+													+ "Click the check-mark reaction or type `%sjoin` to join. "
+													+ "Uncheck the reaction or type `%sleave` to leave.\n"
+													+ "**Tip:** If you don't get a Direct Message you either blocked the bot "
+													+ "or disabled Direct Messages from server members.",
+													event.getAuthor().getLongID(), description.replace("&sc",
+													";"), Handler.PREFIX, Handler.PREFIX
+											);
+											IMessage target = channel.sendMessage(send);
+											query = String.format("INSERT INTO lobbies(author_id, server_id,"
+													+ "link, description, message_id) VALUES("
+													+ "%d, %d, '%s', '%s', %d)", authorId, serverId,
+													link.replace("'", "\\'"), description.replace("'", "\\'"), target.getLongID());
+											Handler.executeUpdate(query);
+											query = String.format("UPDATE servers SET lobby_count=lobby_count+1 WHERE "
+													+ "server_id=%d", event.getGuild().getLongID());
+											Handler.executeUpdate(query);
+											Thread.sleep(300);
+											target.addReaction(Handler.REACTION);
+											Thread.sleep(300);
+											event.getAuthor().addRole(hostRole);
+											event.getChannel().sendMessage(Utils.generateSuccess(
+													"Open lobby started."));
+										} else {
+											event.getChannel().sendMessage(Utils.generateWarning(
+													"Open Lobby channel cannot be seen by the bot "
+													+ "or was deleted."));
+										}
 									} else {
-										event.getChannel().sendMessage(Utils.generateWarning(
-												"Open Lobby channel cannot be seen by the bot "
-												+ "or was deleted."));
+										event.getChannel().sendMessage(Utils.generateWarning("Inavlid invite link."));
 									}
 								}
 							} else {
@@ -214,7 +221,7 @@ public class Functions { // for command actions
 							}
 						} else {
 							event.getChannel().sendMessage(Utils.generateDeny(
-									"create open lobby","the daily limit is reached."));
+									"create open lobby", "the daily limit is reached."));
 						}
 					}
 				} else {
@@ -597,13 +604,13 @@ public class Functions { // for command actions
 					+ "you've blocked me or disabled messages from server members..."));
 		}
 	}
-	
+
 	/**
 	 * Update the lobby limits
 	 */
-	public static synchronized void update () {
+	public static synchronized void update() {
 		String query = String.format("UPDATE servers SET lobby_count=0, start_time=%d WHERE "
-				+ "start_time <= %d", System.currentTimeMillis()+86400000, System.currentTimeMillis());
+				+ "start_time <= %d", System.currentTimeMillis() + 86400000, System.currentTimeMillis());
 		Handler.executeUpdate(query);
 	}
 }

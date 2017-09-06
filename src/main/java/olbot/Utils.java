@@ -9,7 +9,7 @@ public class Utils {
 		":information_source: **__Lobbster__**:\nBleep bloop! I am a bot. Pentox#6935 created "
 				+ "me to automate open lobbies. To add me to your server, execute `%saddbot`. "
 				+ "Here are my commands!\n`%ssetup [open lobby channel mention] [open lobby "
-				+ "maker role name];[open lobby participant role name];[open lobby host name]`:"
+				+ "maker role name];[open lobby participant role name];[open lobby host role name]`:"
 				+ " Sets up this server with "
 				+ "the specified arguments. You "
 				+ "must be an administrator to execute this command. Note that if you execute "
@@ -23,10 +23,11 @@ public class Utils {
 				+ " open lobby and you have the open lobby maker role. Otherwise, you must be an"
 				+ " administrator. This command stops the current open lobby, meaning that no "
 				+ "more people can join.\n`%shelp`: Send help."
-				+ "\n`%stos`: Shows the terms of service for this bot.\n\n"
+				+ "\n`%stos`: Shows the terms of service for this bot."
+				+ "\n`%stest`: Sends you an invite to Pentox's bot testing server.\n\n"
 				+ "Source code of the bot: <https://github.com/Pentox/lobbster/>.",
 				Handler.PREFIX, Handler.PREFIX, Handler.PREFIX, Handler.PREFIX, Handler.PREFIX,
-				Handler.PREFIX, Handler.PREFIX, Handler.PREFIX
+				Handler.PREFIX, Handler.PREFIX, Handler.PREFIX, Handler.PREFIX
 		);
 	
 	public static final String TOS = ":information_source: **__Lobbster Terms of Service__**:\nBy"

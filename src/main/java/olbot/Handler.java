@@ -95,67 +95,67 @@ public class Handler extends MainBot {
 					hostRole = event.getGuild().getRolesByName(hostRoleName).get(0);
 				} catch (IndexOutOfBoundsException ex) {
 				}
-				if (command.equals(PREFIX + "start") && !isBlacklisted(event.getAuthor())
+				if (command.equalsIgnoreCase(PREFIX + "start") && !isBlacklisted(event.getAuthor())
 						&& !event.getAuthor().isBot()) {
 					Functions.start(event, message, channelId, managerRoleMissing, managerRole, hostRole);
-				} else if (command.equals(PREFIX + "join") && !isBlacklisted(event.getAuthor())
+				} else if (command.equalsIgnoreCase(PREFIX + "join") && !isBlacklisted(event.getAuthor())
 						&& !event.getAuthor().isBot()) {
 					Functions.join(event, participantRole);
-				} else if (command.equals(PREFIX + "leave") && !isBlacklisted(event.getAuthor())
+				} else if (command.equalsIgnoreCase(PREFIX + "leave") && !isBlacklisted(event.getAuthor())
 						&& !event.getAuthor().isBot()) {
 					Functions.leave(event, participantRole, hostRole);
-				} else if (command.equals(PREFIX + "stop") && !isBlacklisted(event.getAuthor())
+				} else if (command.equalsIgnoreCase(PREFIX + "stop") && !isBlacklisted(event.getAuthor())
 						&& !event.getAuthor().isBot()) {
 					Functions.stop(event, managerRoleMissing, managerRole, participantRole, hostRole);
-				} else if (command.equals(PREFIX + "setup") && !isBlacklisted(event.getAuthor())
+				} else if (command.equalsIgnoreCase(PREFIX + "setup") && !isBlacklisted(event.getAuthor())
 						&& !event.getAuthor().isBot()) {
 					Functions.resetup(event, message);
-				} else if (command.equals(PREFIX + "help") && !isBlacklisted(event.getAuthor())
+				} else if (command.equalsIgnoreCase(PREFIX + "help") && !isBlacklisted(event.getAuthor())
 						&& !event.getAuthor().isBot()) {
 					Functions.help(event);
-				} else if (command.equals(PREFIX + "tos") && !isBlacklisted(event.getAuthor())
+				} else if (command.equalsIgnoreCase(PREFIX + "tos") && !isBlacklisted(event.getAuthor())
 						&& !event.getAuthor().isBot()) {
 					Functions.tos(event);
-				} else if (command.equals(PREFIX + "test") && !isBlacklisted(event.getAuthor())
+				} else if (command.equalsIgnoreCase(PREFIX + "test") && !isBlacklisted(event.getAuthor())
 						&& !event.getAuthor().isBot()) {
 					Functions.test(event);
-				} else if (command.equals(PREFIX + "blacklist") && !isBlacklisted(event.getAuthor())
+				} else if (command.equalsIgnoreCase(PREFIX + "blacklist") && !isBlacklisted(event.getAuthor())
 						&& !event.getAuthor().isBot()) {
 					Functions.blacklist(event, message);
-				} else if (command.equals(PREFIX + "addbot") && !isBlacklisted(event.getAuthor())
+				} else if (command.equalsIgnoreCase(PREFIX + "addbot") && !isBlacklisted(event.getAuthor())
 						&& !event.getAuthor().isBot()) {
 					Functions.addbot(event);
 				}
 
 			} else {
-				if (command.equals(PREFIX + "setup")
+				if (command.equalsIgnoreCase(PREFIX + "setup")
 						&& !event.getAuthor().isBot()) {
 					try {
 						Functions.setup(event, message);
 					} catch (Exception ex) {
 						event.getChannel().sendMessage(Utils.INVALID_FORMAT);
 					}
-				} else if (command.equals(PREFIX + "help") && !isBlacklisted(event.getAuthor())
+				} else if (command.equalsIgnoreCase(PREFIX + "help") && !isBlacklisted(event.getAuthor())
 						&& !event.getAuthor().isBot()) {
 					Functions.help(event);
-				} else if (command.equals(PREFIX + "tos") && !event.getAuthor().isBot()) {
+				} else if (command.equalsIgnoreCase(PREFIX + "tos") && !event.getAuthor().isBot()) {
 					Functions.tos(event);
-				} else if (command.equals(PREFIX + "test") && !isBlacklisted(event.getAuthor())
+				} else if (command.equalsIgnoreCase(PREFIX + "test") && !isBlacklisted(event.getAuthor())
 						&& !event.getAuthor().isBot()) {
 					Functions.test(event);
-				} else if (command.equals(PREFIX + "blacklist") && !isBlacklisted(event.getAuthor())
+				} else if (command.equalsIgnoreCase(PREFIX + "blacklist") && !isBlacklisted(event.getAuthor())
 						&& !event.getAuthor().isBot()) {
 					Functions.blacklist(event, message);
-				} else if (command.equals(PREFIX + "addbot") && !isBlacklisted(event.getAuthor())
+				} else if (command.equalsIgnoreCase(PREFIX + "addbot") && !isBlacklisted(event.getAuthor())
 						&& !event.getAuthor().isBot()) {
 					Functions.addbot(event);
-				} else if ((command.equals(PREFIX + "start") && !isBlacklisted(event.getAuthor())
+				} else if ((command.equalsIgnoreCase(PREFIX + "start") && !isBlacklisted(event.getAuthor())
 						&& !event.getAuthor().isBot())
-						|| (command.equals(PREFIX + "stop") && !isBlacklisted(event.getAuthor())
+						|| (command.equalsIgnoreCase(PREFIX + "stop") && !isBlacklisted(event.getAuthor())
 						&& !event.getAuthor().isBot())
-						|| (command.equals(PREFIX + "join") && !isBlacklisted(event.getAuthor())
+						|| (command.equalsIgnoreCase(PREFIX + "join") && !isBlacklisted(event.getAuthor())
 						&& !event.getAuthor().isBot())
-						|| (command.equals(PREFIX + "leave") && !isBlacklisted(event.getAuthor())
+						|| (command.equalsIgnoreCase(PREFIX + "leave") && !isBlacklisted(event.getAuthor())
 						&& !event.getAuthor().isBot())) {
 					event.getChannel().sendMessage(Utils.generateWarning(String.format("Those commands are only"
 							+ " available for registered servers. If you are an admin, you can "
