@@ -174,7 +174,7 @@ public class Functions { // for command actions
 								if (link.length() > 100 || description.length() > 200) {
 									event.getChannel().sendMessage(Utils.generateWarning("Link or description "
 											+ "are too long."));
-								} else if (link.length() < 5 || description.length() > 2) {
+								} else if (link.length() < 5 || description.length() < 2) {
 									event.getChannel().sendMessage(Utils.generateWarning("Link or description "
 											+ "are too short."));
 								} else {
