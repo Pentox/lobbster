@@ -1,5 +1,6 @@
 package olbot;
 
+import com.mysql.jdbc.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.Timer;
@@ -25,7 +26,8 @@ public class Handler extends MainBot {
 			+ "id INT AUTO_INCREMENT, server_id BIGINT NOT NULL, channel_id BIGINT "
 			+ "NOT NULL, manager_role VARCHAR(32) NOT NULL,"
 			+ "participant_role VARCHAR(32) NOT NULL, host_role VARCHAR(32) NOT NULL,"
-			+ "start_time BIGINT NOT NULL, lobby_count INT NOT NULL,"
+			+ "start_time BIGINT NOT NULL, lobby_count INT NOT NULL, lobbies_per_day INT,"
+			+ "limit_lobbies BIT(1) NOT NULL,"
 			+ "PRIMARY KEY(id))",
 			"CREATE TABLE IF NOT EXISTS blacklist("
 			+ "id INT AUTO_INCREMENT, user_id BIGINT NOT NULL, PRIMARY KEY(id))",
@@ -60,11 +62,10 @@ public class Handler extends MainBot {
 				executeQuery(query);
 			} catch (Exception ex) {
 				try {
-					MainBot.connection = null;
+					MainBot.disconnect();
 					System.gc();
 					MainBot.connect();
 				} catch (Exception ex2) {
-					ex2.printStackTrace();
 				}
 			}
 			ImprovedString message = new ImprovedString(event.getMessage().getContent());
@@ -124,6 +125,13 @@ public class Handler extends MainBot {
 				} else if (command.equalsIgnoreCase(PREFIX + "addbot") && !isBlacklisted(event.getAuthor())
 						&& !event.getAuthor().isBot()) {
 					Functions.addbot(event);
+				} else if (command.equals(PREFIX + "disconnect") && event.getAuthor().getLongID()
+						== client.getApplicationOwner().getLongID()) {
+					MainBot.disconnect();
+					event.getChannel().sendMessage(Utils.generateSuccess("Disconnected! Bot will "
+							+ "be unusable until next restart."));
+					MainBot.client.logout();
+					client.getDispatcher().unregisterListener(this);
 				}
 
 			} else {
@@ -240,33 +248,45 @@ public class Handler extends MainBot {
 
 	// methods for easy use
 	public static ResultSet executeQuery(String query) {
+		Statement statement = null;
+		ResultSet rs = null;
 		try {
-			Statement statement = MainBot.connection.createStatement();
-			return statement.executeQuery(query);
+			statement = MainBot.connection.createStatement();
+			rs = statement.executeQuery(query);
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
-		return null;
+		finally {
+			return rs;
+		}
 	}
 
 	public static int executeUpdate(String query) {
+		Statement statement = null;
+		int n = 0;
 		try {
-			Statement statement = MainBot.connection.createStatement();
-			return statement.executeUpdate(query);
+			statement = MainBot.connection.createStatement();
+			n = statement.executeUpdate(query);
 		} catch (Exception ex) {
 			ex.printStackTrace();
-			return 0;
+		}
+		finally {
+			return n;
 		}
 	}
 	
 
 	public static boolean execute(String query) {
+		Statement statement = null;
+		boolean executed = false;
 		try {
-			Statement statement = MainBot.connection.createStatement();
-			return statement.execute(query);
+			statement = MainBot.connection.createStatement();
+			executed = statement.execute(query);
 		} catch (Exception ex) {
 			ex.printStackTrace();
-			return false;
+		}
+		finally {
+			return executed;
 		}
 	}
 
@@ -288,5 +308,24 @@ public class Handler extends MainBot {
 				Functions.update();
 			}
 		}, 0, millis);
+	}
+	
+	public static void quietClose(Connection c) {
+		try {
+			c.close();
+		} catch (Exception ex) {
+		}
+	}
+	public static void quietClose(Statement s) {
+		try {
+			s.close();
+		} catch (Exception ex) {
+		}
+	}
+	public static void quietClose(ResultSet rs) {
+		try {
+			rs.close();
+		} catch (Exception ex) {
+		}
 	}
 }

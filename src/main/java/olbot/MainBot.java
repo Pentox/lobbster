@@ -14,7 +14,7 @@ public class MainBot {
 	static String DATABASE_ADDRESS;
 	static String USERNAME;
 	static String PASSWORD;
-	static final String MAX_POOL = "250";
+	static final String MAX_POOL = "10000";
 
 	public static void main(String[] args) {
 	DATABASE_ADDRESS = System.getenv("DATABASE_ADDRESS");
@@ -24,14 +24,15 @@ public class MainBot {
 	EventDispatcher dispatcher = client.getDispatcher(); // Gets the EventDispatcher instance for this client instance
 
 	
-		try {
-			connect();
+	try {
+		connect();
 		dispatcher.registerListener(new Handler()); // Registers the IListener example class from above
 	}
 	catch (Exception ex) {
 		ex.printStackTrace();
 		System.out.println("An error occured while connecting to the database. Please"
 				+ " make sure your entered the correct credentials.");
+		disconnect();
 	}
 }
 

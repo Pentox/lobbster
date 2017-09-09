@@ -2,6 +2,8 @@ package olbot;
 
 import java.sql.ResultSet;
 import java.util.List;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 import sx.blah.discord.handle.impl.events.guild.channel.message.reaction.ReactionAddEvent;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 import sx.blah.discord.handle.impl.events.guild.channel.message.reaction.ReactionRemoveEvent;
@@ -31,29 +33,41 @@ public class Functions { // for command actions
 					String managerRole = message.getContent(2, " ").split(";")[0].trim();
 					String participantRole = message.getContent(2, " ").split(";")[1].trim();
 					String hostRole = message.getContent(2, " ").split(";")[2].trim();
+					String lobbiesPerDayS = message.getContent(2, " ").split(";")[3].trim();
+					boolean limitLobbies = true;
+					if (lobbiesPerDayS.equals("i")) {
+						limitLobbies = false;
+					} else {
+						Integer.parseInt(lobbiesPerDayS);
+					}
 					if (event.getGuild().getRolesByName(managerRole).size() >= 1
 							&& event.getGuild().getRolesByName(participantRole).size() >= 1
 							&& event.getGuild().getRolesByName(hostRole).size() >= 1) {
 						long channelId = channel.getLongID();
 						String query = String.format("INSERT INTO servers"
 								+ "(server_id, channel_id, manager_role, participant_role, "
-								+ "host_role, start_time, lobby_count) "
-								+ "VALUES(%d, %d, '%s', '%s', '%s', %d, 0)",
+								+ "host_role, start_time, lobby_count, lobbies_per_day, "
+								+ "limit_lobbies) "
+								+ "VALUES(%d, %d, '%s', '%s', '%s', %d, 0, %s, %d)",
 								event.getGuild().getLongID(),
 								channelId,
 								managerRole.replace("'", "\\'"),
 								participantRole.replace("'", "\\'"),
 								hostRole.replace("'", "\\'"),
-								System.currentTimeMillis() + 86400000);
+								System.currentTimeMillis() + 86400000,
+								limitLobbies ? lobbiesPerDayS : "NULL",
+								limitLobbies ? 1 : 0
+						);
 
 						Handler.executeUpdate(query);
 						event.getChannel().sendMessage(
 								Utils.generateSuccess(
-										String.format("Server has been set up with open lobby "
-												+ "channel <#%d>, Open Lobby Maker role "
-												+ "**%s**, Open Lobby Participant role **%s**, and Open Lobby "
-												+ "Host role **%s**.",
-												channelId, managerRole, participantRole, hostRole))
+										String.format("Server has been set up with settings:"
+												+ "\nOpen lobby channel: <#%d>\nOpen Lobby Maker role: "
+												+ "**%s**\nOpen Lobby Participant role: **%s**\nOpen Lobby "
+												+ "Host role: **%s**\nOpen lobbies per day: **%s**",
+												channelId, managerRole, participantRole, hostRole, limitLobbies
+														? lobbiesPerDayS : "Unlimited"))
 						);
 					} else {
 						event.getChannel().sendMessage(Utils.generateWarning(
@@ -89,28 +103,39 @@ public class Functions { // for command actions
 					String managerRole = message.getContent(2, " ").split(";")[0].trim();
 					String participantRole = message.getContent(2, " ").split(";")[1].trim();
 					String hostRole = message.getContent(2, " ").split(";")[2].trim();
+					String lobbiesPerDayS = message.getContent(2, " ").split(";")[3].trim();
+					boolean limitLobbies = true;
+					if (lobbiesPerDayS.equals("i")) {
+						limitLobbies = false;
+					} else {
+						Integer.parseInt(lobbiesPerDayS);
+					}
 					if (event.getGuild().getRolesByName(managerRole).size() >= 1
 							&& event.getGuild().getRolesByName(participantRole).size() >= 1
 							&& event.getGuild().getRolesByName(hostRole).size() >= 1) {
 						long channelId = channel.getLongID();
 						String query = String.format("UPDATE servers SET "
-								+ "channel_id=%d, manager_role='%s', "
-								+ "participant_role='%s', "
-								+ "host_role='%s' WHERE server_id=%d",
+								+ "channel_id=%d, manager_role='%s', participant_role='%s', "
+								+ "host_role='%s', lobbies_per_day=%s, "
+								+ "limit_lobbies=%d WHERE server_id=%d",
 								channelId,
 								managerRole.replace("'", "\\'"),
 								participantRole.replace("'", "\\'"),
 								hostRole.replace("'", "\\'"),
-								event.getGuild().getLongID());
+								limitLobbies ? lobbiesPerDayS : "NULL",
+								limitLobbies ? 1 : 0,
+								event.getGuild().getLongID()
+						);
 
 						Handler.executeUpdate(query);
 						event.getChannel().sendMessage(
 								Utils.generateSuccess(
-										String.format("Server settings have been update to open lobby "
-												+ "channel <#%d>, Open Lobby Maker role "
-												+ "**%s**, Open Lobby Participant role **%s**, and Open Lobby "
-												+ "Host role **%s**.",
-												channelId, managerRole, participantRole, hostRole))
+										String.format("Server has been re-setup with settings:"
+												+ "\nOpen lobby channel: <#%d>\nOpen Lobby Maker role: "
+												+ "**%s**\nOpen Lobby Participant role: **%s**\nOpen Lobby "
+												+ "Host role: **%s**\nOpen lobbies per day: **%s**",
+												channelId, managerRole, participantRole, hostRole, limitLobbies
+														? lobbiesPerDayS : "Unlimited"))
 						);
 					} else {
 						event.getChannel().sendMessage(Utils.generateWarning(
@@ -153,13 +178,19 @@ public class Functions { // for command actions
 						event.getChannel().sendMessage(Utils.generateDeny("start an open lobby",
 								"there is one currently running."));
 					} else {
-						query = String.format("SELECT lobby_count FROM servers WHERE "
+						query = String.format("SELECT limit_lobbies, lobbies_per_day, "
+								+ "lobby_count FROM servers WHERE "
 								+ "server_id=%d", event.getGuild().getLongID());
 						ResultSet s = Handler.executeQuery(query);
-						boolean canCreate = true;
+						boolean canCreate = false;
+						boolean limitLobbies = true;
+						int lobbiesPerDay = 0;
 						if (s.next()) {
-							if (s.getInt(1) >= 2) {
-								canCreate = false;
+							int lobbyCount = s.getInt(3);
+							limitLobbies = s.getInt(1) == 1;
+							lobbiesPerDay = s.getInt(2);
+							if (!limitLobbies || lobbyCount < lobbiesPerDay) {
+								canCreate = true;
 							}
 						}
 						if (canCreate) {
@@ -178,18 +209,23 @@ public class Functions { // for command actions
 									event.getChannel().sendMessage(Utils.generateWarning("Link or description "
 											+ "are too short."));
 								} else {
-									if (link.matches("(https?://)?(www\\.)?.{3,100}\\.+.{2,100}")) {
+									String regex = "(http[s]?:\\/\\/)?(\\w+(?:\\.\\w+)+)(:\\d{1,5})?(\\/[/.#?=&%+\\-\\w]*)*";
+									Pattern pattern = Pattern.compile(regex);
+									Matcher matcher = pattern.matcher(link);
+									String game;
+									if (matcher.matches()) {
+										game = matcher.group(2);
 										IChannel channel = MainBot.client.getChannelByID(channelId);
 										if (channel != null) {
 											event.getMessage().delete();
 											String send = String.format(
-													"__**@here New Open Lobby by <@%d>**__:\n\n"
+													"__**@here New %s Open Lobby by <@%d>**__:\n\n"
 													+ "%s\n\n"
 													+ "Click the check-mark reaction or type `%sjoin` to join. "
 													+ "Uncheck the reaction or type `%sleave` to leave.\n"
 													+ "**Tip:** If you don't get a Direct Message you either blocked the bot "
 													+ "or disabled Direct Messages from server members.",
-													event.getAuthor().getLongID(), description.replace("&sc",
+													game, event.getAuthor().getLongID(), description.replace("&sc",
 													";"), Handler.PREFIX, Handler.PREFIX
 											);
 											IMessage target = channel.sendMessage(send);
@@ -261,7 +297,8 @@ public class Functions { // for command actions
 				String send = String.format(
 						"__**Open Lobby by <@%d>** in server **%s**__:\n\n"
 						+ "%s\n\n"
-						+ "Link: %s",
+						+ "Link: <%s>"
+						+ "\n**Warning:** Bot does not check link security. Click at your own risk.",
 						authorId, serverd, description.replace("&sc",
 								";"), link
 				);
@@ -300,7 +337,8 @@ public class Functions { // for command actions
 				String send = String.format(
 						"__**Open Lobby by <@%d>** in server **%s**__:\n\n"
 						+ "%s\n\n"
-						+ "Link: %s",
+						+ "Link: <%s>"
+						+ "\n**Warning:** Bot does not check link security. Click at your own risk.",
 						authorId, serverd, description.replace("&sc",
 								";"), link
 				);
@@ -428,8 +466,9 @@ public class Functions { // for command actions
 							query = String.format("DELETE FROM lobbies WHERE server_id"
 									+ "=%d", event.getGuild().getLongID());
 							Handler.executeUpdate(query);
-							channel.sendMessage(Utils.LOBBY_OVER);
+							channel.sendMessage(String.format("<@&%d> Open Lobby over!", prole.getLongID()));
 							Thread.sleep(300);
+
 							event.getAuthor().removeRole(hostRole);
 							for (IUser user : event.getGuild().getUsersByRole(prole)) {
 								Thread.sleep(200);
@@ -610,7 +649,7 @@ public class Functions { // for command actions
 	 */
 	public static synchronized void update() {
 		String query = String.format("UPDATE servers SET lobby_count=0, start_time=%d WHERE "
-				+ "start_time <= %d", System.currentTimeMillis() + 86400000, System.currentTimeMillis());
+				+ "start_time <= %d AND limit_lobbies=1", System.currentTimeMillis() + 86400000, System.currentTimeMillis());
 		Handler.executeUpdate(query);
 	}
 }

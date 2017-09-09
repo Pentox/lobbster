@@ -4,6 +4,7 @@ public class Utils {
 	
 	public static final String INVALID_FORMAT = ":no_entry_sign: Invalid format! Try `"
 			+ Handler.PREFIX + "help` for help.";
+	@Deprecated
 	public static final String LOBBY_OVER = "@here Open lobby over!";
 	public static final String HELP_MESSAGE = String.format(
 		":information_source: **__Lobbster__**:\nBleep bloop! I am a bot. Pentox#6935 created "
@@ -52,7 +53,8 @@ public class Utils {
 			+ "you don't have one. You can name it whatever you want BUT IT SHOULD NOT "
 			+ "CONTAIN SEMI-COLONS.\nSecond, create an **Open Lobby Participant** role if "
 			+ "you don't have one. Again, you can name it whatever you want BUT IT SHOULD NOT "
-			+ "CONTAIN SEMI-COLONS.\nThird, create an **Open Lobby Host** role if "
+			+ "CONTAIN SEMI-COLONS. Also, make it mentionable."
+			+ "\nThird, create an **Open Lobby Host** role if "
 			+ "you don't have one. Once more, you can name it whatever you want BUT IT SHOULD NOT "
 			+ "CONTAIN SEMI-COLONS. Place ALL THREE of the roles UNDER the bot role (\"Lobbster\"). "
 			+ "Last, you will need to create an **open lobby channel**, if you haven't already. "
@@ -62,10 +64,12 @@ public class Utils {
 			+ "<https://discordapp.com/oauth2/authorize?client_id=354264151520051201&scope="
 			+ "bot&permissions=268577856> to add the bot to your server.\n"
 			+ "Once the bot's in your server, there is one more step.\nExecute the command "
-			+ "`%ssetup [1] [2];[3];[4]`. Mention the channel you created in place of **[1]**, "
+			+ "`%ssetup [1] [2];[3];[4];[5]`. Mention the channel you created in place of **[1]**, "
 			+ "replace **[2]** with the name of the manager role you created, replace "
-			+ "**[3]** with the name of participant role you created, and finally replace **[4]**"
-			+ " With the name of the host role you created. Please note the seperating semi-colon.\n"
+			+ "**[3]** with the name of participant role you created, replace **[4]**"
+			+ " With the name of the host role you created, and finally (phew) replace **[5]** with how"
+			+ " many open lobbies you want to be created per day, or `i` if you want infinite open lobbies."
+			+ " Please note the seperating semi-colon.\n"
 			+ "You're now set! Give the manager role to people who you want to be able to make open "
 			+ "lobbies. Enjoy!\n\nSource code: <https://github.com/Pentox/lobbster/>."
 			+ "\n**Tip:** Use `%shelp` for more commands!", Handler.PREFIX, 
